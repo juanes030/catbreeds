@@ -8,12 +8,14 @@ class BreedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final origin = breed.origin ?? 'Origin unknown';
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: _BreedImage(imageUrl: breed.image?.url),
         title: Text(breed.name),
-        subtitle: Text(breed.origin.isEmpty ? 'Origin unknown' : breed.origin),
+        subtitle: Text(origin),
         trailing: const Icon(Icons.chevron_right),
       ),
     );
