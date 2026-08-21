@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:catbreeds/core/di/injection.dart';
 import 'package:catbreeds/features/breeds/presentation/bloc/breeds/breeds_bloc.dart';
 import 'package:catbreeds/features/breeds/presentation/widgets/breed_card.dart';
@@ -26,6 +28,9 @@ class _BreedsView extends StatefulWidget {
 
 class _BreedsViewState extends State<_BreedsView> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -46,11 +51,34 @@ class _BreedsViewState extends State<_BreedsView> {
     }
   }
 
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) {
+        return;
+      }
+
+      context.read<BreedsBloc>().add(BreedsSearch(value));
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+
+    context.read<BreedsBloc>().add(const BreedsStarted());
+  }
+
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
+
+    _searchController.dispose();
 
     super.dispose();
   }
@@ -59,87 +87,181 @@ class _BreedsViewState extends State<_BreedsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cat Breeds')),
-      body: BlocBuilder<BreedsBloc, BreedsState>(
-        builder: (context, state) {
-          if (state.status == BreedsStatus.loading && state.breeds.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          _SearchField(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            onClear: _clearSearch,
+          ),
+          Expanded(
+            child: BlocBuilder<BreedsBloc, BreedsState>(
+              builder: (context, state) {
+                if (state.status == BreedsStatus.loading &&
+                    state.breeds.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (state.status == BreedsStatus.failure && state.breeds.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Something went wrong'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<BreedsBloc>().add(const BreedsStarted());
+                if (state.status == BreedsStatus.failure &&
+                    state.breeds.isEmpty) {
+                  return _ErrorView(
+                    message: state.errorMessage,
+                    onRetry: () {
+                      if (state.searchQuery.isNotEmpty) {
+                        context.read<BreedsBloc>().add(
+                          BreedsSearch(state.searchQuery),
+                        );
+                      } else {
+                        context.read<BreedsBloc>().add(const BreedsStarted());
+                      }
                     },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final extraItems = state.isLoadingMore || state.hasMoreError ? 1 : 0;
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<BreedsBloc>().add(const BreedsRefresh());
-
-              await context.read<BreedsBloc>().stream.firstWhere(
-                (state) =>
-                    state.status == BreedsStatus.success ||
-                    state.status == BreedsStatus.failure,
-              );
-            },
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: state.breeds.length + extraItems,
-              itemBuilder: (context, index) {
-                if (index >= state.breeds.length) {
-                  if (state.hasMoreError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Text(
-                            state.errorMessage ?? 'Unable to load more breeds.',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              context.read<BreedsBloc>().add(
-                                const BreedsLoadMore(),
-                              );
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-            
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                final breed = state.breeds[index];
-                return BreedCard(
-                  breed: state.breeds[index],
-                  onTap: () {
-                    context.push('/breed/${breed.id}', extra: breed);
+
+                if (state.status == BreedsStatus.success &&
+                    state.breeds.isEmpty) {
+                  return _EmptyView(isSearching: state.searchQuery.isNotEmpty);
+                }
+
+                final extraItems = state.isLoadingMore || state.hasMoreError
+                    ? 1
+                    : 0;
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<BreedsBloc>().add(const BreedsRefresh());
+
+                    await context.read<BreedsBloc>().stream.firstWhere(
+                      (state) =>
+                          state.status == BreedsStatus.success ||
+                          state.status == BreedsStatus.failure,
+                    );
                   },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: state.breeds.length + extraItems,
+                    itemBuilder: (context, index) {
+                      if (index >= state.breeds.length) {
+                        if (state.hasMoreError) {
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                Text(
+                                  state.errorMessage ??
+                                      'Unable to load more breeds.',
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                TextButton(
+                                  onPressed: () {
+                                    context.read<BreedsBloc>().add(
+                                      const BreedsLoadMore(),
+                                    );
+                                  },
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final breed = state.breeds[index];
+
+                      return BreedCard(
+                        breed: breed,
+                        onTap: () {
+                          context.push('/breed/${breed.id}', extra: breed);
+                        },
+                      );
+                    },
+                  ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Search breeds...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: controller.text.isNotEmpty
+              ? IconButton(onPressed: onClear, icon: const Icon(Icons.clear))
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String? message;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 12),
+            Text(
+              message ?? 'Something went wrong',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyView extends StatelessWidget {
+  final bool isSearching;
+
+  const _EmptyView({required this.isSearching});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(isSearching ? 'No breeds found.' : 'No breeds available.'),
     );
   }
 }

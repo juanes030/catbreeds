@@ -34,4 +34,27 @@ class BreedsRepositoryImpl implements BreedsRepository {
       throw const UnknownFailure();
     }
   }
+
+  @override
+  Future<List<Breed>> searchBreeds({required String query}) async {
+    try {
+      return await remoteDataSource.searchBreeds(query: query);
+    } on ApiException catch (e) {
+      switch (e.statusCode) {
+        case 401:
+        case 403:
+          throw UnauthorizedFailure(e.message);
+
+        case 404:
+          throw NotFoundFailure(e.message);
+
+        default:
+          throw ServerFailure(e.message);
+      }
+    } on NetworkException catch (e) {
+      throw NetworkFailure(e.message);
+    } catch (_) {
+      throw const UnknownFailure();
+    }
+  }
 }

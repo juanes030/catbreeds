@@ -40,4 +40,31 @@ class BreedsRemoteDataSourceImpl implements BreedsRemoteDataSource {
       );
     }
   }
+
+  @override
+  Future<List<BreedModel>> searchBreeds({required String query}) async {
+    try {
+      final response = await dio.get(
+        '/breeds/search',
+        queryParameters: {'q': query, 'attach_image': 1},
+      );
+
+      final data = response.data as List<dynamic>;
+
+      return data
+          .map((json) => BreedModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ApiException(
+          statusCode: e.response?.statusCode,
+          message: e.message ?? 'API request failed.',
+        );
+      }
+
+      throw NetworkException(
+        e.message ?? 'Please check your internet connection.',
+      );
+    }
+  }
 }

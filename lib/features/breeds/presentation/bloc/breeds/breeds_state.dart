@@ -10,6 +10,7 @@ class BreedsState extends Equatable {
   final bool isLoadingMore;
   final String? errorMessage;
   final bool hasMoreError;
+  final String searchQuery;
 
   const BreedsState({
     this.status = BreedsStatus.initial,
@@ -19,6 +20,7 @@ class BreedsState extends Equatable {
     this.isLoadingMore = false,
     this.errorMessage,
     this.hasMoreError = false,
+    this.searchQuery = '',
   });
 
   BreedsState copyWith({
@@ -29,6 +31,7 @@ class BreedsState extends Equatable {
     bool? isLoadingMore,
     String? errorMessage,
     bool? hasMoreError,
+    String? searchQuery,
     bool clearErrorMessage = false,
   }) {
     return BreedsState(
@@ -41,6 +44,7 @@ class BreedsState extends Equatable {
           ? null
           : errorMessage ?? this.errorMessage,
       hasMoreError: hasMoreError ?? this.hasMoreError,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
@@ -53,6 +57,7 @@ class BreedsState extends Equatable {
     isLoadingMore,
     errorMessage,
     hasMoreError,
+    searchQuery,
   ];
 }
 

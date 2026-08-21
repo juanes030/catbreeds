@@ -1,8 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:catbreeds/core/error/failures/failure.dart';
-import 'package:equatable/equatable.dart';
 import 'package:catbreeds/features/breeds/domain/entities/breed.dart';
 import 'package:catbreeds/features/breeds/domain/usecases/get_breeds.dart';
+import 'package:catbreeds/features/breeds/domain/usecases/search_breeds.dart';
+import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
 part 'breeds_event.dart';
@@ -13,11 +14,13 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
   static const int _pageSize = 10;
 
   final GetBreeds getBreeds;
+  final SearchBreeds searchBreeds;
 
-  BreedsBloc(this.getBreeds) : super(const BreedsInitial()) {
+  BreedsBloc(this.getBreeds, this.searchBreeds) : super(const BreedsInitial()) {
     on<BreedsStarted>(_onStarted);
     on<BreedsLoadMore>(_onLoadMore);
     on<BreedsRefresh>(_onRefresh);
+    on<BreedsSearch>(_onSearch);
   }
 
   Future<void> _onStarted(
@@ -30,6 +33,7 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
         errorMessage: null,
         hasMoreError: false,
         isLoadingMore: false,
+        searchQuery: '',
         clearErrorMessage: true,
       ),
     );
@@ -45,6 +49,7 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
           hasReachedMax: breeds.length < _pageSize,
           hasMoreError: false,
           isLoadingMore: false,
+          searchQuery: '',
           clearErrorMessage: true,
         ),
       );
@@ -64,7 +69,9 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
     BreedsLoadMore event,
     Emitter<BreedsState> emit,
   ) async {
-    if (state.hasReachedMax || state.isLoadingMore) {
+    if (state.hasReachedMax ||
+        state.isLoadingMore ||
+        state.searchQuery.isNotEmpty) {
       return;
     }
 
@@ -107,6 +114,7 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
         errorMessage: null,
         hasMoreError: false,
         isLoadingMore: false,
+        searchQuery: '',
         clearErrorMessage: true,
       ),
     );
@@ -122,6 +130,7 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
           hasReachedMax: breeds.length < _pageSize,
           isLoadingMore: false,
           hasMoreError: false,
+          searchQuery: '',
           clearErrorMessage: true,
         ),
       );
@@ -132,6 +141,53 @@ class BreedsBloc extends Bloc<BreedsEvent, BreedsState> {
           errorMessage: failure.message,
           hasMoreError: false,
           isLoadingMore: false,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onSearch(BreedsSearch event, Emitter<BreedsState> emit) async {
+    final query = event.query.trim();
+
+    if (query.isEmpty) {
+      add(const BreedsStarted());
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        status: BreedsStatus.loading,
+        errorMessage: null,
+        hasMoreError: false,
+        isLoadingMore: false,
+        searchQuery: query,
+        clearErrorMessage: true,
+      ),
+    );
+
+    try {
+      final breeds = await searchBreeds(query: query);
+
+      emit(
+        state.copyWith(
+          status: BreedsStatus.success,
+          breeds: breeds,
+          currentPage: 0,
+          hasReachedMax: true,
+          isLoadingMore: false,
+          hasMoreError: false,
+          searchQuery: query,
+          clearErrorMessage: true,
+        ),
+      );
+    } on Failure catch (failure) {
+      emit(
+        state.copyWith(
+          status: BreedsStatus.failure,
+          errorMessage: failure.message,
+          hasMoreError: false,
+          isLoadingMore: false,
+          searchQuery: query,
         ),
       );
     }

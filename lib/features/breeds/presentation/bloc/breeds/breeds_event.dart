@@ -18,3 +18,12 @@ final class BreedsLoadMore extends BreedsEvent {
 final class BreedsRefresh extends BreedsEvent {
   const BreedsRefresh();
 }
+
+final class BreedsSearch extends BreedsEvent {
+  final String query;
+
+  const BreedsSearch(this.query);
+
+  @override
+  List<Object> get props => [query];
+}

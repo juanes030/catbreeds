@@ -20,6 +20,8 @@ import 'package:catbreeds/features/breeds/domain/repositories/breeds_repository.
     as _i393;
 import 'package:catbreeds/features/breeds/domain/usecases/get_breeds.dart'
     as _i300;
+import 'package:catbreeds/features/breeds/domain/usecases/search_breeds.dart'
+    as _i974;
 import 'package:catbreeds/features/breeds/presentation/bloc/breeds/breeds_bloc.dart'
     as _i1070;
 import 'package:dio/dio.dart' as _i361;
@@ -44,8 +46,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i300.GetBreeds>(
       () => _i300.GetBreeds(gh<_i393.BreedsRepository>()),
     );
+    gh.factory<_i974.SearchBreeds>(
+      () => _i974.SearchBreeds(gh<_i393.BreedsRepository>()),
+    );
     gh.factory<_i1070.BreedsBloc>(
-      () => _i1070.BreedsBloc(gh<_i300.GetBreeds>()),
+      () => _i1070.BreedsBloc(gh<_i300.GetBreeds>(), gh<_i974.SearchBreeds>()),
     );
     return this;
   }
