@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:catbreeds/features/breeds/domain/entities/breed.dart';
+import 'package:flutter/material.dart';
 
 class BreedCard extends StatelessWidget {
   final Breed breed;
+  final VoidCallback? onTap;
 
-  const BreedCard({super.key, required this.breed});
+  const BreedCard({super.key, required this.breed, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +14,7 @@ class BreedCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
+        onTap: onTap,
         leading: _BreedImage(imageUrl: breed.image?.url),
         title: Text(breed.name),
         subtitle: Text(origin),

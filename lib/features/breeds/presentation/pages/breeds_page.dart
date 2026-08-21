@@ -3,6 +3,7 @@ import 'package:catbreeds/features/breeds/presentation/bloc/breeds/breeds_bloc.d
 import 'package:catbreeds/features/breeds/presentation/widgets/breed_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class BreedsPage extends StatelessWidget {
   const BreedsPage({super.key});
@@ -127,8 +128,13 @@ class _BreedsViewState extends State<_BreedsView> {
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-            
-                return BreedCard(breed: state.breeds[index]);
+                final breed = state.breeds[index];
+                return BreedCard(
+                  breed: state.breeds[index],
+                  onTap: () {
+                    context.push('/breed/${breed.id}', extra: breed);
+                  },
+                );
               },
             ),
           );

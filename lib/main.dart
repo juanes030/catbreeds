@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:catbreeds/app/router/app_router.dart';
 import 'package:catbreeds/core/di/injection.dart';
-import 'package:catbreeds/features/breeds/presentation/pages/breeds_page.dart';
+import 'package:flutter/material.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,11 +15,11 @@ class CatBreedsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Cat Breeds',
       theme: ThemeData(useMaterial3: true),
-      home: const BreedsPage(),
+      routerConfig: AppRouter.router,
     );
   }
 }
