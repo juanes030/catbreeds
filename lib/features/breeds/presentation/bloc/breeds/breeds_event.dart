@@ -14,3 +14,7 @@ final class BreedsStarted extends BreedsEvent {
 final class BreedsLoadMore extends BreedsEvent {
   const BreedsLoadMore();
 }
+
+final class BreedsRefresh extends BreedsEvent {
+  const BreedsRefresh();
+}

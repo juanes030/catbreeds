@@ -1,3 +1,5 @@
+import 'package:catbreeds/core/error/exceptions/api_exception.dart';
+import 'package:catbreeds/core/error/exceptions/network_exception.dart';
 import 'package:catbreeds/features/breeds/data/datasources/breeds_remote_data_source.dart';
 import 'package:catbreeds/features/breeds/data/models/breed_model.dart';
 import 'package:dio/dio.dart';
@@ -14,15 +16,28 @@ class BreedsRemoteDataSourceImpl implements BreedsRemoteDataSource {
     required int page,
     required int limit,
   }) async {
-    final response = await dio.get(
-      '/breeds',
-      queryParameters: {'page': page, 'limit': limit},
-    );
+    try {
+      final response = await dio.get(
+        '/breeds',
+        queryParameters: {'page': page, 'limit': limit},
+      );
 
-    final data = response.data as List<dynamic>;
+      final data = response.data as List<dynamic>;
 
-    return data
-        .map((json) => BreedModel.fromJson(json as Map<String, dynamic>))
-        .toList();
+      return data
+          .map((json) => BreedModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ApiException(
+          statusCode: e.response?.statusCode,
+          message: e.message ?? 'API request failed.',
+        );
+      }
+
+      throw NetworkException(
+        e.message ?? 'Please check your internet connection.',
+      );
+    }
   }
 }

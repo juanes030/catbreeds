@@ -82,21 +82,55 @@ class _BreedsViewState extends State<_BreedsView> {
             );
           }
 
-          return ListView.builder(
-            controller: _scrollController,
-            itemCount: state.breeds.length + (state.isLoadingMore ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index >= state.breeds.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+          final extraItems = state.isLoadingMore || state.hasMoreError ? 1 : 0;
 
-              final breed = state.breeds[index];
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<BreedsBloc>().add(const BreedsRefresh());
 
-              return BreedCard(breed: breed);
+              await context.read<BreedsBloc>().stream.firstWhere(
+                (state) =>
+                    state.status == BreedsStatus.success ||
+                    state.status == BreedsStatus.failure,
+              );
             },
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: state.breeds.length + extraItems,
+              itemBuilder: (context, index) {
+                if (index >= state.breeds.length) {
+                  if (state.hasMoreError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Text(
+                            state.errorMessage ?? 'Unable to load more breeds.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              context.read<BreedsBloc>().add(
+                                const BreedsLoadMore(),
+                              );
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+            
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+            
+                return BreedCard(breed: state.breeds[index]);
+              },
+            ),
           );
         },
       ),

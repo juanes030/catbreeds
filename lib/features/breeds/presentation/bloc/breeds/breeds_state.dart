@@ -9,6 +9,7 @@ class BreedsState extends Equatable {
   final bool hasReachedMax;
   final bool isLoadingMore;
   final String? errorMessage;
+  final bool hasMoreError;
 
   const BreedsState({
     this.status = BreedsStatus.initial,
@@ -17,6 +18,7 @@ class BreedsState extends Equatable {
     this.hasReachedMax = false,
     this.isLoadingMore = false,
     this.errorMessage,
+    this.hasMoreError = false,
   });
 
   BreedsState copyWith({
@@ -26,6 +28,8 @@ class BreedsState extends Equatable {
     bool? hasReachedMax,
     bool? isLoadingMore,
     String? errorMessage,
+    bool? hasMoreError,
+    bool clearErrorMessage = false,
   }) {
     return BreedsState(
       status: status ?? this.status,
@@ -33,7 +37,10 @@ class BreedsState extends Equatable {
       currentPage: currentPage ?? this.currentPage,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
+      hasMoreError: hasMoreError ?? this.hasMoreError,
     );
   }
 
@@ -45,6 +52,7 @@ class BreedsState extends Equatable {
     hasReachedMax,
     isLoadingMore,
     errorMessage,
+    hasMoreError,
   ];
 }
 
