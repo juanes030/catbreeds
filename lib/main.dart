@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:catbreeds/core/di/injection.dart';
+import 'package:catbreeds/features/breeds/presentation/pages/breeds_page.dart';
 
-void main() {
-  runApp(const MainApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await configureDependencies();
+
+  runApp(const CatBreedsApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class CatBreedsApp extends StatelessWidget {
+  const CatBreedsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('Hello World!'))),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Cat Breeds',
+      theme: ThemeData(useMaterial3: true),
+      home: const BreedsPage(),
     );
   }
 }
