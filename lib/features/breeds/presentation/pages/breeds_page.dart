@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:catbreeds/core/di/injection.dart';
 import 'package:catbreeds/features/breeds/presentation/bloc/breeds/breeds_bloc.dart';
 import 'package:catbreeds/features/breeds/presentation/widgets/breed_card.dart';
+import 'package:catbreeds/features/breeds/presentation/widgets/breed_search_field.dart';
+import 'package:catbreeds/features/breeds/presentation/widgets/breeds_empty_view.dart';
+import 'package:catbreeds/features/breeds/presentation/widgets/breeds_error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -89,7 +92,7 @@ class _BreedsViewState extends State<_BreedsView> {
       appBar: AppBar(title: const Text('Cat Breeds')),
       body: Column(
         children: [
-          _SearchField(
+          BreedSearchField(
             controller: _searchController,
             onChanged: _onSearchChanged,
             onClear: _clearSearch,
@@ -104,7 +107,7 @@ class _BreedsViewState extends State<_BreedsView> {
 
                 if (state.status == BreedsStatus.failure &&
                     state.breeds.isEmpty) {
-                  return _ErrorView(
+                  return BreedsErrorView(
                     message: state.errorMessage,
                     onRetry: () {
                       if (state.searchQuery.isNotEmpty) {
@@ -120,7 +123,7 @@ class _BreedsViewState extends State<_BreedsView> {
 
                 if (state.status == BreedsStatus.success &&
                     state.breeds.isEmpty) {
-                  return _EmptyView(isSearching: state.searchQuery.isNotEmpty);
+                  return BreedsEmptyView(isSearching: state.searchQuery.isNotEmpty);
                 }
 
                 final extraItems = state.isLoadingMore || state.hasMoreError
@@ -188,80 +191,6 @@ class _BreedsViewState extends State<_BreedsView> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  const _SearchField({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: 'Search breeds...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: controller.text.isNotEmpty
-              ? IconButton(onPressed: onClear, icon: const Icon(Icons.clear))
-              : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  final String? message;
-  final VoidCallback onRetry;
-
-  const _ErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              message ?? 'Something went wrong',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyView extends StatelessWidget {
-  final bool isSearching;
-
-  const _EmptyView({required this.isSearching});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(isSearching ? 'No breeds found.' : 'No breeds available.'),
     );
   }
 }
