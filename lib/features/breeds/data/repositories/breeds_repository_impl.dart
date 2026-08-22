@@ -20,16 +20,16 @@ class BreedsRepositoryImpl implements BreedsRepository {
       switch (e.statusCode) {
         case 401:
         case 403:
-          throw UnauthorizedFailure(e.message);
+          throw const UnauthorizedFailure();
 
         case 404:
-          throw NotFoundFailure(e.message);
+          throw const NotFoundFailure();
 
         default:
-          throw ServerFailure(e.message);
+          throw const ServerFailure();
       }
-    } on NetworkException catch (e) {
-      throw NetworkFailure(e.message);
+    } on NetworkException {
+      throw const NetworkFailure();
     } catch (_) {
       throw const UnknownFailure();
     }
@@ -43,16 +43,16 @@ class BreedsRepositoryImpl implements BreedsRepository {
       switch (e.statusCode) {
         case 401:
         case 403:
-          throw UnauthorizedFailure(e.message);
+          throw const UnauthorizedFailure();
 
         case 404:
-          throw NotFoundFailure(e.message);
+          throw const NotFoundFailure();
 
         default:
-          throw ServerFailure(e.message);
+          throw const ServerFailure();
       }
-    } on NetworkException catch (e) {
-      throw NetworkFailure(e.message);
+    } on NetworkException {
+      throw const NetworkFailure();
     } catch (_) {
       throw const UnknownFailure();
     }
